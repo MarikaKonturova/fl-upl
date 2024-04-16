@@ -1,18 +1,13 @@
 "use client";
-import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { CalendarIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Rabota, itemsState, useAppStore } from "../lib/store";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { useRouter } from "next/navigation";
-import { DatePicker } from "./DatePicker";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@radix-ui/react-popover";
-import { format, setDate } from "date-fns";
-import { Button } from "react-day-picker";
+import { useState } from "react";
+import { Rabota, itemsState, useAppStore } from "../lib/store";
 import { Calendar } from "./ui/calendar";
+import { Toaster } from "./ui/toaster";
+import { useToast } from "./ui/use-toast";
+import { ToastAction } from "./ui/toast";
 
 const DialogRabota = ({
   rabota,
@@ -21,20 +16,41 @@ const DialogRabota = ({
   rabota?: Rabota;
   type: "edit" | "add";
 }) => {
+  const { toast: toastLib } = useToast();
   const router = useRouter();
-  const [data, setData] = useState<Rabota>(rabota || ({} as Rabota));
-  const [creationDate, setCreationDate] = useState<Date>(
-    rabota?.creationDate || new Date()
+
+  const [data, setData] = useState<Rabota>(
+    rabota || {
+      id: "",
+      name: "",
+      description: "",
+      sotrudnikCode: "",
+      bossCode: "",
+      creationDate: new Date(),
+      endDate: new Date(),
+    }
   );
+
   const updateItem = useAppStore((state) => state.updateItem);
   const addItem = useAppStore((state) => state.addItem);
   const onClick = () => {
-    if (type === "edit") {
-      updateItem({ stateType: itemsState.raboty, item: data });
+    if (
+      Object.keys(data).length === 0 ||
+      Object.keys(data).some((d) => d.trim() === "")
+    ) {
+      toastLib({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Не все поля заполненны, перепроверьте данные",
+      });
+      return;
     } else {
-      /* if все поля есть => добавить, иначе => тост */
-      addItem({ stateType: itemsState.raboty, item: data });
-      router.push("/tableRaboty");
+      if (type === "edit") {
+        updateItem({ stateType: itemsState.raboty, item: data });
+      } else {
+        addItem({ stateType: itemsState.raboty, item: data });
+        router.push("/tableRaboty");
+      }
     }
   };
 

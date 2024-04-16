@@ -1,5 +1,9 @@
 "use client";
+import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
+import { AuroraBackground } from "../components/AuroraBackground";
+import DialogRabota from "../components/DialogRabota";
 import { Button } from "../components/ui/button";
 import {
   Table,
@@ -10,24 +14,31 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import {
-  Rabota,
-  Sotrudnik,
-  itemsState,
-  operationType,
-  useAppStore,
-} from "../lib/store";
-import { AuroraBackground } from "../components/AuroraBackground";
-import { motion } from "framer-motion";
-import DialogRabota from "../components/DialogRabota";
+import { Rabota, itemsState, operationType, useAppStore } from "../lib/store";
 
 export default function TableRaboty() {
   const operation = useAppStore((state) => state.operation);
-  const raboty = useAppStore((state) => state.raboty);
+  let raboty = useAppStore((state) => state.raboty);
   const removeItem = useAppStore((state) => state.removeItem);
+  let projects = raboty.map((r) => r.name);
+  const [filter, setFilter] = useState("");
+
   const onRemoveItemClick = (s: Rabota) => {
     removeItem({ stateType: itemsState.raboty, item: s });
   };
+
+  if (operation === operationType.getDataByProjectName && filter) {
+    raboty = raboty.filter((r) => r.name === filter);
+  }
+  if (operation === operationType.getDatabyNearMonth) {
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+
+    raboty = raboty.filter((r) => {
+      const dataDate = new Date(r.endDate);
+      return dataDate < currentDate;
+    });
+  }
   return (
     <AuroraBackground>
       <Link
@@ -36,6 +47,32 @@ export default function TableRaboty() {
       >
         Назад в меню
       </Link>
+      {operation === operationType.getDataByProjectName && (
+        <div className="flex justify-center gap-8 mb-5">
+          {projects.map((pr) => (
+            <Button
+              variant={"secondary"}
+              className="z-10"
+              key={pr}
+              onClick={() => {
+                setFilter(pr);
+              }}
+            >
+              {pr}
+            </Button>
+          ))}
+          <Button
+            className="z-10"
+            variant={"secondary"}
+            key={"all"}
+            onClick={() => {
+              setFilter("");
+            }}
+          >
+            all
+          </Button>
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0.0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

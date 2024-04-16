@@ -2,38 +2,32 @@
 
 import { AuroraBackground } from "@/app/components/AuroraBackground";
 import { motion } from "framer-motion";
-import React, { ChangeEvent } from "react";
-import { BentoGrid, BentoGridItem } from "../components/ui/grid";
-import Link from "next/link";
-import Papa from "papaparse";
-import {
-  Sotrudnik,
-  itemsState,
-  operationType,
-  useAppStore,
-} from "../lib/store";
 import { useRouter } from "next/navigation";
+import CsvDownloader from "react-csv-downloader";
+import { BentoGrid, BentoGridItem } from "../components/ui/grid";
+import { operationType, useAppStore } from "../lib/store";
+import { columnsRaboty, columnsSotrudnik } from "./lib/constants";
 
 export default function Main() {
   const router = useRouter();
   const setOperation = useAppStore((state) => state.setOperation);
-  const download = (url: string) => {
-    const a = document.createElement("a");
-    a.href = url;
-   // a.download = url.split("/").pop();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+  const setReset = useAppStore((state) => state.setReset);
+  const raboty = useAppStore((state) => state.raboty);
+  const sotrudniky = useAppStore((state) => state.sotrudniky);
   const onItemClick = (type: string) => {
-    if (type === operationType.exitWithSave){
-    //  download()
+    if (
+      type === operationType.getDatabyNearMonth ||
+      type === operationType.getDataByProjectName
+    ) {
+      setOperation(type);
+      router.push("/tableRaboty");
+      return;
     }
+
     setOperation(type);
     router.push("/lists");
-
   };
- 
+
   return (
     <AuroraBackground>
       <motion.div
@@ -48,14 +42,52 @@ export default function Main() {
       >
         <BentoGrid>
           <>
-            {Object.values(operationType).map((operationName, index) => (
-              <BentoGridItem
-                key={index}
-                onClick={() => onItemClick(operationName)}
-              >
-                {operationName}
-              </BentoGridItem>
-            ))}
+            {Object.values(operationType).map((operationName, index) => {
+              if (operationName === operationType.exitWithSave) {
+                return (
+                  <CsvDownloader
+                    key={index}
+                    columns={columnsRaboty}
+                    datas={raboty as any}
+                    filename={"raboty"}
+                    separator=";"
+                  >
+                    <CsvDownloader
+                      key={index}
+                      columns={columnsSotrudnik}
+                      datas={sotrudniky}
+                      filename={"sotrudniky"}
+                      separator=";"
+                    >
+                      <BentoGridItem onClick={() => router.push("/")}>
+                        {operationName}
+                      </BentoGridItem>
+                    </CsvDownloader>
+                  </CsvDownloader>
+                );
+              } else if (operationName === operationType.exitWithoutSave) {
+                return (
+                  <BentoGridItem
+                    key={index}
+                    onClick={() => {
+                      setReset();
+                      router.push("/");
+                    }}
+                  >
+                    {operationName}
+                  </BentoGridItem>
+                );
+              } else {
+                return (
+                  <BentoGridItem
+                    key={index}
+                    onClick={() => onItemClick(operationName)}
+                  >
+                    {operationName}
+                  </BentoGridItem>
+                );
+              }
+            })}
           </>
         </BentoGrid>
       </motion.div>

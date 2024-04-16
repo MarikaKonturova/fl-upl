@@ -16,25 +16,51 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DialogSotrudnik from "../components/DialogSotrudnik";
 import DialogRabota from "../components/DialogRabota";
+import { Toaster } from "../components/ui/toaster";
+import { headersRaboty, headersSotrudniky } from "./lib/constants";
+import { useToast } from "../components/ui/use-toast";
 
 export default function Lists() {
   const router = useRouter();
+  const { toast } = useToast();
   const addItems = useAppStore((state) => state.addItems);
   const operation = useAppStore((state) => state.operation);
   const onFileUploadSotrudnikyChange = (e: ChangeEvent<HTMLInputElement>) => {
     const onComplete = (results: Papa.ParseResult<string[]>) => {
-      const data: Sotrudnik[] = results.data.map((arrData: string[], index) => {
-        const valuesOfArrData = Object.values(arrData);
-        return {
-          bossCode: valuesOfArrData[3],
-          dayhours: valuesOfArrData[2],
-          fio: valuesOfArrData[0],
-          sotrudnikCode: valuesOfArrData[4],
-          id: index + "",
-          position: valuesOfArrData[1],
-        };
-      });
-      addItems({ items: data, stateType: itemsState.sotrudniky });
+      console.log(
+        JSON.stringify(headersSotrudniky) ===
+          JSON.stringify(Object.keys(results.data[0]))
+      );
+      console.log(JSON.stringify(Object.keys(results.data[0])));
+      if (
+        !JSON.stringify(Object.keys(results.data[0])) ||
+        JSON.stringify(headersSotrudniky) !==
+          JSON.stringify(Object.keys(results.data[0]))
+      ) {
+        toast({
+          title: "Ошибка",
+          variant: "destructive",
+          description: "Не корректный формат файла, попробуйте по-другому",
+        });
+        return;
+      } else {
+        const data: Sotrudnik[] = results.data.map(
+          (arrData: string[], index) => {
+            const valuesOfArrData = Object.values(arrData);
+
+            return {
+              bossCode: valuesOfArrData[3],
+              dayhours: valuesOfArrData[2],
+              fio: valuesOfArrData[0],
+              sotrudnikCode: valuesOfArrData[4],
+              id: index + "",
+              position: valuesOfArrData[1],
+            };
+          }
+        );
+        addItems({ items: data, stateType: itemsState.sotrudniky });
+        router.push("/tableSotrudniky");
+      }
     };
     const file = e.currentTarget.files?.[0];
     if (file) {
@@ -45,23 +71,36 @@ export default function Lists() {
         complete: onComplete,
       });
     }
-    router.push("/tableSotrudniky");
   };
   const onFileUploadRabotaChange = (e: ChangeEvent<HTMLInputElement>) => {
     const onComplete = (results: Papa.ParseResult<string[]>) => {
-      const data: Rabota[] = results.data.map((arrData: string[], index) => {
-        const valuesOfArrData = Object.values(arrData);
-        return {
-          name: valuesOfArrData[0],
-          description: valuesOfArrData[1],
-          sotrudnikCode: valuesOfArrData[2],
-          bossCode: valuesOfArrData[3],
-          creationDate: valuesOfArrData[4] as unknown as Date,
-          endDate: valuesOfArrData[5] as unknown as Date,
-          id: index + "",
-        };
-      });
-      addItems({ items: data, stateType: itemsState.raboty });
+      if (
+        !JSON.stringify(Object.keys(results.data[0])) ||
+        JSON.stringify(headersRaboty) !==
+          JSON.stringify(Object.keys(results.data[0]))
+      ) {
+        toast({
+          title: "Ошибка",
+          variant: "destructive",
+          description: "Не корректный формат файла, попробуйте по-другому",
+        });
+        return;
+      } else {
+        const data: Rabota[] = results.data.map((arrData: string[], index) => {
+          const valuesOfArrData = Object.values(arrData);
+          return {
+            name: valuesOfArrData[0],
+            description: valuesOfArrData[1],
+            sotrudnikCode: valuesOfArrData[2],
+            bossCode: valuesOfArrData[3],
+            creationDate: valuesOfArrData[4] as unknown as Date,
+            endDate: valuesOfArrData[5] as unknown as Date,
+            id: index + "",
+          };
+        });
+        addItems({ items: data, stateType: itemsState.raboty });
+        router.push("/tableRaboty");
+      }
     };
     const file = e.currentTarget.files?.[0];
     if (file) {
@@ -72,7 +111,6 @@ export default function Lists() {
         complete: onComplete,
       });
     }
-    router.push("/tableRaboty");
   };
 
   return (
@@ -96,12 +134,12 @@ export default function Lists() {
         <h1 className="text-3xl text-white">Выбрать список для работы</h1>
         <BentoGrid className="grid-cols-1 md:grid-cols-2">
           {operation === operationType.loadData ? (
-            <label htmlFor="files">
+            <label htmlFor="filesSotrudniky">
               <BentoGridItem>
                 <>
                   <span>Сотрудники</span>
                   <input
-                    id="files"
+                    id="filesSotrudniky"
                     style={{ visibility: "hidden" }}
                     type="file"
                     accept=".csv"
@@ -121,12 +159,12 @@ export default function Lists() {
           )}
 
           {operation === operationType.loadData ? (
-            <label htmlFor="files">
+            <label htmlFor="filesRabota">
               <BentoGridItem>
                 <>
                   <span>Работа</span>
                   <input
-                    id="files"
+                    id="filesRabota"
                     style={{ visibility: "hidden" }}
                     type="file"
                     accept=".csv"
@@ -146,6 +184,7 @@ export default function Lists() {
           )}
         </BentoGrid>
       </motion.div>
+      <Toaster />
     </AuroraBackground>
   );
 }

@@ -57,26 +57,24 @@ export type Rabota = {
 type PayloadType = { item: Sotrudnik | Rabota; stateType: Values };
 type PayloadArrType = { items: Sotrudnik[] | Rabota[]; stateType: Values };
 export interface StoreType {
-  originalSotrudniky: Sotrudnik[];
   sotrudniky: Sotrudnik[];
-  originalRaboty: Rabota[];
   raboty: Rabota[];
   operation: string;
   setOperation: (operation: string) => void;
   addItems: (payload: PayloadArrType) => void;
   addItem: (payload: PayloadType) => void;
+  setReset: () => void;
   updateItem: (payload: PayloadType) => void;
   removeItem: (payload: PayloadType) => void;
 }
 export const useAppStore = create<StoreType, [["zustand/persist", StoreType]]>(
   persist(
     (set) => ({
-      originalSotrudniky: [],
-      originalRaboty: [],
       sotrudniky: [],
       raboty: [],
       operation: "",
       setOperation: (operation) => set({ operation }),
+      setReset: () => ({ sotrudniky: [], raboty: [], operation: "" }),
       addItems: ({ items, stateType }: PayloadArrType) =>
         set((state) => ({
           ...state,
@@ -86,7 +84,10 @@ export const useAppStore = create<StoreType, [["zustand/persist", StoreType]]>(
       addItem: ({ item, stateType }) =>
         set((state) => ({
           ...state,
-          [stateType]: [...state[stateType], item],
+          [stateType]: [
+            ...state[stateType],
+            { ...item, id: state[stateType].length + 1 },
+          ],
         })),
       updateItem: ({ item, stateType }) =>
         set((state) => {

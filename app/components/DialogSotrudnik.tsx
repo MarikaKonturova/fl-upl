@@ -4,6 +4,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { Sotrudnik, itemsState, useAppStore } from "../lib/store";
 import { useRouter } from "next/navigation";
+import { useToast } from "./ui/use-toast";
+import { ToastAction } from "./ui/toast";
 
 const DialogSotrudnik = ({
   sotrudnik,
@@ -16,13 +18,35 @@ const DialogSotrudnik = ({
   const [data, setData] = useState<Sotrudnik>(sotrudnik || ({} as Sotrudnik));
   const updateItem = useAppStore((state) => state.updateItem);
   const addItem = useAppStore((state) => state.addItem);
+  const { toast: toastLib } = useToast();
+
   const onClick = () => {
-    if (type === "edit") {
-      updateItem({ stateType: itemsState.sotrudniky, item: data });
+    if (
+      Object.keys(data).length === 0 ||
+      Object.keys(data).some((d) => d.trim() === "")
+    ) {
+      toastLib({
+        title: "Ошибка",
+        variant: "destructive",
+        description: "Не все поля заполненны, перепроверьте данные",
+      });
+      return;
+    } else if (Number(data.dayhours) > 24 || Number(data.dayhours) < 0) {
+      toastLib({
+        title: "Ошибка",
+        variant: "destructive",
+        description:
+          'Введите корректные значение в поле " Число рабочих часов в сутки" ',
+      });
+      return;
     } else {
-      /* if все поля есть => добавить, иначе => тост */
-      addItem({ stateType: itemsState.sotrudniky, item: data });
-      router.push("/tableSotrudniky");
+      if (type === "edit") {
+        updateItem({ stateType: itemsState.sotrudniky, item: data });
+      } else {
+        /* if все поля есть => добавить, иначе => тост */
+        addItem({ stateType: itemsState.sotrudniky, item: data });
+        router.push("/tableSotrudniky");
+      }
     }
   };
 
@@ -43,9 +67,7 @@ const DialogSotrudnik = ({
           <Dialog.Title className="text-mauve12 m-0 text-[17px] font-medium">
             Изменить данные о сотруднике
           </Dialog.Title>
-          {/* <Dialog.Description className="text-mauve11 mt-[10px] mb-5 text-[15px] leading-normal">
-          Make changes to your profile here. Click save when you're done.
-        </Dialog.Description> */}
+
           <fieldset className="mb-[15px] flex items-center gap-5">
             <label
               className="text-blackA11 w-[90px] text-right text-[15px]"
@@ -91,7 +113,7 @@ const DialogSotrudnik = ({
                 setData({ ...data, dayhours: e.currentTarget.value })
               }
             />
-          </fieldset>{" "}
+          </fieldset>
           <fieldset className="mb-[15px] flex items-center gap-5">
             <label
               className="text-blackA11 w-[90px] text-right text-[15px]"
@@ -107,7 +129,7 @@ const DialogSotrudnik = ({
                 setData({ ...data, bossCode: e.currentTarget.value })
               }
             />
-          </fieldset>{" "}
+          </fieldset>
           <fieldset className="mb-[15px] flex items-center gap-5">
             <label
               className="text-blackA11 w-[90px] text-right text-[15px]"
