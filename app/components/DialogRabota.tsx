@@ -8,6 +8,7 @@ import { Calendar } from "./ui/calendar";
 import { Toaster } from "./ui/toaster";
 import { useToast } from "./ui/use-toast";
 import { ToastAction } from "./ui/toast";
+import { headersRaboty } from "../lists/lib/constants";
 
 const DialogRabota = ({
   rabota,
@@ -19,24 +20,14 @@ const DialogRabota = ({
   const { toast: toastLib } = useToast();
   const router = useRouter();
 
-  const [data, setData] = useState<Rabota>(
-    rabota || {
-      id: "",
-      name: "",
-      description: "",
-      sotrudnikCode: "",
-      bossCode: "",
-      creationDate: new Date(),
-      endDate: new Date(),
-    }
-  );
+  const [data, setData] = useState<Rabota>(rabota || ({} as Rabota));
 
   const updateItem = useAppStore((state) => state.updateItem);
   const addItem = useAppStore((state) => state.addItem);
   const onClick = () => {
     if (
-      Object.keys(data).length === 0 ||
-      Object.keys(data).some((d) => d.trim() === "")
+      Object.keys(data).length < headersRaboty.length ||
+      Object.values(data).some((d) => (d + "").trim() === "")
     ) {
       toastLib({
         title: "Ошибка",
@@ -143,7 +134,7 @@ const DialogRabota = ({
 
               <Calendar
                 mode="single"
-                selected={data.creationDate || new Date()}
+                selected={data.creationDate}
                 onSelect={(creationDate) =>
                   creationDate && setData({ ...data, creationDate })
                 }
@@ -156,7 +147,7 @@ const DialogRabota = ({
               </span>
               <Calendar
                 mode="single"
-                selected={data.endDate || new Date()}
+                selected={data.endDate}
                 onSelect={(endDate) => endDate && setData({ ...data, endDate })}
                 className="rounded-md border shadow bg-black "
               />
